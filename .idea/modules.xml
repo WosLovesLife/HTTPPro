@@ -3,7 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/HTTPPro.iml" filepath="$PROJECT_DIR$/HTTPPro.iml" />
+      <module fileurl="file://$PROJECT_DIR$/HTTPPro.iml" filepath="$PROJECT_DIR$/HTTPPro.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/httplibs/httplibs.iml" filepath="$PROJECT_DIR$/httplibs/httplibs.iml" />
       <module fileurl="file://$PROJECT_DIR$/httplibs/httplibs.iml" filepath="$PROJECT_DIR$/httplibs/httplibs.iml" />
     </modules>
   </component>
