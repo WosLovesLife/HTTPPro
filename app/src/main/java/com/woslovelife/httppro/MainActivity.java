@@ -3,6 +3,8 @@ package com.woslovelife.httppro;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 
 import com.uuzuche.lib_zxing.activity.CaptureActivity;
 import com.uuzuche.lib_zxing.activity.CodeUtils;
+import com.woslovelife.httplibs.DownloadManager;
 import com.woslovelife.httplibs.HttpManager;
 import com.woslovelife.httplibs.Logger;
 import com.woslovelife.httplibs.NetCallback;
@@ -59,7 +62,9 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            startDownload(result);
+                            mTvState.setText("下载状态: 下载中...");
+//                            startDownload(result);
+                            multiThreadsDownload(result);
                         }
                     })
                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -79,45 +84,53 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startDownload(String url) {
-        mTvState.setText("下载状态: 下载中...");
-        HttpManager.getInstance().asyncReq(url, new NetCallback() {
-            @Override
-            public void success(File file) {
-                Logger.d("文件大小 = " + file.length());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
-                        mTvState.setText("下载状态: 下载完成");
-                    }
-                });
-            }
-
-            @Override
-            public void fail(int code, final String msg) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "下载失败(" + msg + ")", Toast.LENGTH_SHORT).show();
-                        mTvState.setText("下载状态: 下载失败");
-                    }
-                });
-            }
-
-            @Override
-            public void progress(final long progress, final long max) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgressBar.setProgress(Math.round(progress * 100 / max));
-                        mTvProgress.setText("下载进度: " + progress);
-                        mTvMax.setText("总大小: " + max);
-                    }
-                });
-            }
-        });
+    private void multiThreadsDownload(String url) {
+        DownloadManager.getInstance().download(url, mNetCallback);
     }
+
+    private void startDownload(String url) {
+        HttpManager.getInstance().asyncReq(url, mNetCallback);
+    }
+
+    NetCallback mNetCallback = new NetCallback() {
+        @Override
+        public void success(final File file) {
+            Logger.d("文件大小 = " + file.length());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                    mImageView.setImageBitmap(bitmap);
+
+                    Toast.makeText(MainActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
+                    mTvState.setText("下载状态: 下载完成");
+                }
+            });
+        }
+
+        @Override
+        public void fail(int code, final String msg) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, "下载失败(" + msg + ")", Toast.LENGTH_SHORT).show();
+                    mTvState.setText("下载状态: 下载失败");
+                }
+            });
+        }
+
+        @Override
+        public void progress(final long progress, final long max) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgressBar.setProgress(Math.round(progress * 100 / max));
+                    mTvProgress.setText("下载进度: " + progress);
+                    mTvMax.setText("总大小: " + max);
+                }
+            });
+        }
+    };
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
