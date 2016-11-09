@@ -1,12 +1,19 @@
 package com.woslovelife.httppro;
 
+import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.uuzuche.lib_zxing.activity.CaptureActivity;
+import com.uuzuche.lib_zxing.activity.CodeUtils;
 import com.woslovelife.httplibs.HttpManager;
 import com.woslovelife.httplibs.Logger;
 import com.woslovelife.httplibs.NetCallback;
@@ -14,6 +21,7 @@ import com.woslovelife.httplibs.NetCallback;
 import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_CODE_QR = 0;
 
     private ImageView mImageView;
     private ProgressBar mProgressBar;
@@ -31,17 +39,55 @@ public class MainActivity extends AppCompatActivity {
         mTvState = (TextView) findViewById(R.id.tv_state);
         mTvProgress = (TextView) findViewById(R.id.tv_progress);
         mTvMax = (TextView) findViewById(R.id.tv_max);
+        findViewById(R.id.btn_scan_qr).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /* 扫描二维码并在result中获取结果 */
+                Intent intent = new Intent(MainActivity.this, CaptureActivity.class);
+                startActivityForResult(intent, REQUEST_CODE_QR);
+            }
+        });
 
+        mTvState.setText("空闲中");
+    }
+
+    private void check(final String result) {
+        if (result.startsWith("http://")) {
+            new AlertDialog.Builder(this)
+                    .setTitle(null)
+                    .setMessage("点击确定开始下载")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startDownload(result);
+                        }
+                    })
+                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create()
+                    .show();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle(null)
+                    .setMessage("二维码内容: " + result)
+                    .create()
+                    .show();
+        }
+    }
+
+    private void startDownload(String url) {
         mTvState.setText("下载状态: 下载中...");
-        HttpManager.getInstance().asyncReq("http://dl2.smartisan.cn/app/handshaker/win/simple/HandShakerSimpleSetup_Win8_Win10.exe", new NetCallback() {
+        HttpManager.getInstance().asyncReq(url, new NetCallback() {
             @Override
             public void success(File file) {
-//                final Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
                 Logger.d("文件大小 = " + file.length());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-//                        mImageView.setImageBitmap(bitmap);
                         Toast.makeText(MainActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
                         mTvState.setText("下载状态: 下载完成");
                     }
@@ -71,5 +117,30 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != Activity.RESULT_OK) return;
+
+        switch (requestCode) {
+            case REQUEST_CODE_QR:
+                //处理扫描结果（在界面上显示）
+                if (null != data) {
+                    Bundle bundle = data.getExtras();
+                    if (bundle == null) {
+                        Toast.makeText(this, "解析二维码失败", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (bundle.getInt(CodeUtils.RESULT_TYPE) == CodeUtils.RESULT_SUCCESS) {
+                        String result = bundle.getString(CodeUtils.RESULT_STRING);
+                        check(result);
+                    } else if (bundle.getInt(CodeUtils.RESULT_TYPE) == CodeUtils.RESULT_FAILED) {
+                        Toast.makeText(this, "解析二维码失败", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
+        }
     }
 }

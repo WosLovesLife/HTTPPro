@@ -1,1 +1,1 @@
-include ':app', ':httplibs'
+include ':app', ':httplibs', ':lib-zxing'

@@ -2,6 +2,7 @@ package com.woslovelife.httppro;
 
 import android.app.Application;
 
+import com.uuzuche.lib_zxing.activity.ZXingLibrary;
 import com.woslovelife.httplibs.FileManager;
 import com.woslovelife.httplibs.HttpManager;
 
@@ -18,5 +19,7 @@ public class App extends Application {
 
         HttpManager.getInstance().init(this);
         FileManager.getInstance().init(this);
+
+        ZXingLibrary.initDisplayOpinion(this);
     }
 }
