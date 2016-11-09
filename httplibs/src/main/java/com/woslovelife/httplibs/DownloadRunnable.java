@@ -34,6 +34,10 @@ public class DownloadRunnable implements Runnable {
         }
 
         File file = FileManager.getInstance().getFile(mUrl);
+        if (file == null) {
+            mNetCallback.fail(HttpManager.ERROR_CODE_WROTE_FAIL, "本地文件创建失败");
+            return;
+        }
         RandomAccessFile randomAccessFile = null;
         try {
             randomAccessFile = new RandomAccessFile(file, "rwd");
@@ -42,11 +46,11 @@ public class DownloadRunnable implements Runnable {
             BufferedInputStream inputStream = new BufferedInputStream(response.body().byteStream());
             byte[] bytes = new byte[1024 * 500];
             int len;
-            int count = 0;
             while ((len = inputStream.read(bytes)) != -1) {
                 randomAccessFile.write(bytes, 0, len);
-                count += len;
-
+                if (mNetCallback != null) {
+                    mNetCallback.progress(len, 0);
+                }
             }
             if (mNetCallback != null) {
                 mNetCallback.success(file);

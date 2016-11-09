@@ -2,7 +2,9 @@ package com.woslovelife.httplibs;
 
 import android.content.Context;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -20,7 +22,7 @@ public class DownloadManager {
     private static final DownloadManager sManager = new DownloadManager();
     private static final int MAX_THREAD = 2;
 
-    private static final ThreadPoolExecutor sThreadPool = new ThreadPoolExecutor(2, 2, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+    private static final ThreadPoolExecutor sThreadPool = new ThreadPoolExecutor(MAX_THREAD, MAX_THREAD, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
         /** 原子级的整数操作 */
         AtomicInteger mInteger = new AtomicInteger(1);
 
@@ -61,17 +63,39 @@ public class DownloadManager {
 
                 long bodyLength = response.body().contentLength();
                 if (bodyLength < 0) {
-                    callback.fail(HttpManager.ERROR_CODE_UNSUPPORTED, "不支持范围下载");
-                    //TODO 可以采用常规方式下载
+                    /* 采用常规方式下载 */
+                    final File file = FileManager.getInstance().getFile(url);
+                    if (file == null) {
+                        callback.fail(HttpManager.ERROR_CODE_WROTE_FAIL, "写入文件时发生错误" + response.message());
+                        return;
+                    }
+
+                    InputStream inputStream = response.body().byteStream();
+                    try {
+                        FileManager.getInstance().write2File(inputStream, file, null);
+                        callback.success(file);
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        callback.fail(HttpManager.ERROR_CODE_WROTE_FAIL, "写入文件时发生错误" + response.message());
+                    } finally {
+                        IOUtils.close(inputStream);
+                    }
                     return;
                 }
 
-                multiThreadsDownload(url,bodyLength,callback);
+                mProgress = -1;
+                mSuccessThread = 0;
+                multiThreadsDownload(url, bodyLength, callback);
             }
         });
     }
 
-    private void multiThreadsDownload(String url, long length, NetCallback callback) {
+    long mProgress;
+    int mSuccessThread;
+
+    private void multiThreadsDownload(String url, long length, final NetCallback callback) {
+        final long contentLength = length;
+
         /* 每一条线程要处理的大小 */
         long size = length / MAX_THREAD;
         for (int i = 0; i < MAX_THREAD; i++) {
@@ -81,7 +105,31 @@ public class DownloadManager {
                 end = length;
             }
 
-            sThreadPool.execute(new DownloadRunnable(start, end, url, callback));
+            sThreadPool.execute(new DownloadRunnable(start, end, url, new NetCallback() {
+                @Override
+                public void success(File file) {
+                    synchronized (this) {
+                        ++mSuccessThread;
+                        if (mSuccessThread == MAX_THREAD) {
+                            callback.success(file);
+                        }
+                    }
+                }
+
+                @Override
+                public void fail(int code, String msg) {
+                    callback.fail(code, msg);
+                    //TODO 结束另一条线程, 或将当前线程的进度保存起来
+                }
+
+                @Override
+                public void progress(long progress, long max) {
+                    synchronized (this) {
+                        mProgress += progress;
+                        callback.progress(mProgress, contentLength);
+                    }
+                }
+            }));
         }
     }
 }

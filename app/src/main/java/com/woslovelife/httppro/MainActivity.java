@@ -63,6 +63,9 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             mTvState.setText("下载状态: 下载中...");
+                            mProgressBar.setProgress(0);
+                            mTvProgress.setText("下载进度: 0");
+                            mTvMax.setText("总大小: 0");
 //                            startDownload(result);
                             multiThreadsDownload(result);
                         }
