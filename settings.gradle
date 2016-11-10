@@ -1,1 +1,1 @@
-include ':app', ':httplibs', ':lib-zxing'
+include ':app', ':httplibs', ':lib-zxing', ':daogenerate'

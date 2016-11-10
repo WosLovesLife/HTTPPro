@@ -18,7 +18,7 @@ import com.uuzuche.lib_zxing.activity.CaptureActivity;
 import com.uuzuche.lib_zxing.activity.CodeUtils;
 import com.woslovelife.httplibs.DownloadManager;
 import com.woslovelife.httplibs.HttpManager;
-import com.woslovelife.httplibs.Logger;
+import com.woslovelife.httplibs.utils.Logger;
 import com.woslovelife.httplibs.NetCallback;
 
 import java.io.File;
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(MainActivity.this, "下载失败(" + msg + ")", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "下载失败(" + msg + ")", Toast.LENGTH_LONG).show();
                     mTvState.setText("下载状态: 下载失败");
                 }
             });

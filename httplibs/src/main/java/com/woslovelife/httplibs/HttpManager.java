@@ -3,6 +3,10 @@ package com.woslovelife.httplibs;
 import android.content.Context;
 import android.support.annotation.Nullable;
 
+import com.woslovelife.httplibs.file.FileManager;
+import com.woslovelife.httplibs.utils.IOUtils;
+import com.woslovelife.httplibs.utils.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +26,7 @@ public class HttpManager {
     public static final int ERROR_CODE_FAIL = 1;
     public static final int ERROR_CODE_WROTE_FAIL = 2;
     public static final int ERROR_CODE_UNSUPPORTED = 3;
+    public static final int ERROR_CODE_TASK_EXISTED = 4;
 
     private static final HttpManager sManager = new HttpManager();
     private final OkHttpClient mOkHttpClient;

@@ -1,5 +1,8 @@
 package com.woslovelife.httplibs;
 
+import com.woslovelife.httplibs.file.FileManager;
+import com.woslovelife.httplibs.utils.IOUtils;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;

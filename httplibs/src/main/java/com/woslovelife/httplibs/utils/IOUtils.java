@@ -1,4 +1,4 @@
-package com.woslovelife.httplibs;
+package com.woslovelife.httplibs.utils;
 
 import java.io.Closeable;
 import java.io.IOException;

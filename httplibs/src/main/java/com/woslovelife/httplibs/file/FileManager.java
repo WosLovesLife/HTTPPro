@@ -1,9 +1,13 @@
-package com.woslovelife.httplibs;
+package com.woslovelife.httplibs.file;
 
 import android.content.Context;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+
+import com.woslovelife.httplibs.utils.IOUtils;
+import com.woslovelife.httplibs.utils.Logger;
+import com.woslovelife.httplibs.utils.MD5Utils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
