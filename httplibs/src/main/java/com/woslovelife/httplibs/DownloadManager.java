@@ -2,13 +2,17 @@ package com.woslovelife.httplibs;
 
 import android.content.Context;
 
+import com.woslovelife.httplibs.db.DownloadEntity;
+import com.woslovelife.httplibs.db.DownloadHelper;
 import com.woslovelife.httplibs.file.FileManager;
 import com.woslovelife.httplibs.utils.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -39,6 +43,7 @@ public class DownloadManager {
     });
 
     private Context mContext;
+    private List<DownloadEntity> mCache;
 
     private DownloadManager() {
     }
@@ -52,6 +57,11 @@ public class DownloadManager {
     }
 
     public void download(final String url, final NetCallback callback) {
+
+        mCache = DownloadHelper.getInstance().getAll(url);
+        if (mCache == null || mCache.size() == 0) {
+
+        }
 
         final DownloadTask task = new DownloadTask(url, callback);
         if (mTasks.contains(task)) {
@@ -103,7 +113,7 @@ public class DownloadManager {
                     return;
                 }
 
-                mProgress = 0;
+                mProgress = -1;
                 mSuccessThread = 0;
 
                 multiThreadsDownload(url, bodyLength, new NetCallback() {
@@ -145,6 +155,10 @@ public class DownloadManager {
     int mSuccessThread;
 
     private void multiThreadsDownload(String url, long length, final NetCallback callback) {
+        if (mCache == null || mCache.size() == 0) {
+            mCache = new ArrayList<>();
+        }
+
         /* 每一条线程要处理的大小 */
         long size = length / MAX_THREAD;
         for (int i = 0; i < MAX_THREAD; i++) {
@@ -153,6 +167,14 @@ public class DownloadManager {
             if (i == MAX_THREAD - 1) {
                 end = length - 1;
             }
+
+            DownloadEntity entity = new DownloadEntity();
+            entity.setStart_position(start);
+            entity.setEnd_position(end);
+            entity.setDownload_url(url);
+            entity.setThread_id((i+1));
+
+            mCache.set((i+1),entity);
 
             sThreadPool.execute(new DownloadRunnable(start, end, url, callback));
         }
